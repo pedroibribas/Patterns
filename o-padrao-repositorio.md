@@ -27,4 +27,15 @@
 1) Query: **Business Layers** > **Repository** > query > **Data Source Layer** > set of entities => **Repository** > business entity > **Business Layers**
 2) Persistence: **Business Layers** > new/changed entities > **Repository** > **Data Source Layer**
 -**Unit of Work:** Em situações complexas, a lógica negocial do cliente pode usar do padrão **Unit Of Work**, pelo qual é possível encapsular várias operações relacionadas que deveriam ser consistentes entre si ou que têm dependências relacionadas, e que submete itens ao repositório para que este proceda com seus comandos sobre a fonte de dados.
-- **Data Mapper:** O repositório atua como um mediador entre diferentes domínios, como é o caso da fonte de dados e a lógica de negócio que age sobre a entidade. Contudo, a 'tipagem' entre esses domínios são diferentes, e as consultas apropriadas à fonte ou a exposição dos dados recuperados às entidades negociais precisam ser tratadas, isto é, traduzidas entre representações específicas, o que pode ser realizado pelo padrão de Data Mapper.
+
+
+## Data Mapper
+
+> Referências:
+> - [Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html); em MartinFowler.com.
+
+O problema que surge ao lidar com a persistência de dados é que os objetos in-memory e a base de dados diferem nos mecanismos de estruturação de dados; cada mecanismo gera um esquema diferente que não combinam, cujo tráfego de dados pode causar prejuízos. Esse problema exige uma lógica complexa para processar a transferência de dados dos objetos in-memory e da base de dados.
+
+O padrão Data Mapper representa uma camada de software em que reúne mappers que movem dados entre objetos e uma base de dados enquanto os mantém independentes entre si e de si mesmo. Isso significa que a lógica de negócio não precisa conhecer 
+
+O repositório atua como um mediador entre diferentes domínios, como é o caso da fonte de dados e a lógica de negócio que age sobre a entidade. Contudo, a 'tipagem' entre esses domínios são diferentes, e as consultas apropriadas à fonte ou a exposição dos dados recuperados às entidades negociais precisam ser tratadas, isto é, traduzidas entre representações específicas, o que pode ser realizado pelo padrão de Data Mapper.
