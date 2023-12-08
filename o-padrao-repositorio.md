@@ -1,6 +1,6 @@
-# O Padrão Repositório (Repository)
+# O Padrão Repository
 
-> Baseado em [The Repository Pattern](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff649690(v=pandp.10))
+> Baseado em [The Repository Pattern](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff649690(v=pandp.10)).
 
 ## Introdução
 
@@ -20,25 +20,34 @@
 - Maximizar a quantidade de código que possa alcançada por testes automatizados e viabilizar o teste unitário ao isolando a camada de dados;
 - Aplicar um modelo de domínio para simplificar lógicas de negócio complexas.
 
-**O Repositório.**
-- **Conceito:** Um repositório assume a lógica de interação com a fonte de dados da aplicação, isto é, a lógica que recupera os dados da fonte de dados - _query_ -, mapeia os dados obtidos a uma entidade do negócio - _mapping_ - e persiste mudanças da entidade na fonte de dados - _persistence_.
-- **Vantagens:** O repositório permite centralizar a lógica de acesso a dados; provê um ponto próprio para testes unitários; e provê uma arquitetura flexível para se adaptar conforme o design do resto da aplicação evolui; A lógica de negócio deveria ser agnóstica ao tipo de dados que constitui a camada da fonte dos dados, que poderia ser uma base-de-dados, uma lista SharePoint ou um serviço Web, ou qual linguagem é usada para recuperar os dados, se SQL, ou CAML, bastando que a camada de regra de negócio apenas use a interface do repositório específico.
-- **Fluxos:** As formas pelas quais o repositório atua em relação ao cliente são as seguintes:
-1) Query: **Business Layers** > **Repository** > query > **Data Source Layer** > set of entities => **Repository** > business entity > **Business Layers**
-2) Persistence: **Business Layers** > new/changed entities > **Repository** > **Data Source Layer**
--**Unit of Work:** Em situações complexas, a lógica negocial do cliente pode usar do padrão **Unit Of Work**, pelo qual é possível encapsular várias operações relacionadas que deveriam ser consistentes entre si ou que têm dependências relacionadas, e que submete itens ao repositório para que este proceda com seus comandos sobre a fonte de dados.
+## Conceito
+O repositório é a camada que assume a lógica de interação com a fonte de dados da aplicação, isto é, a lógica que mapeia a entidade negocial para dados da fonte e vice-versa, a que recupera dados da fonte e a que persiste mudanças da entidade na fonte de dados.
 
+As vantagens que se pode obter com o repositório são:
+- Permite centralizar a lógica de acesso a dados;
+- Provê um ponto próprio para testes unitários;
+- Provê uma arquitetura flexível para se adaptar conforme o design do resto da aplicação evolui;
+- Viabiliza que a lógica de negócio seja agnóstica ao tipo de dados que constitui a fonte dos dados ou qual é a sua linguagem, bastando que a camada de regra de negócio apenas use a interface do repositório específico.
 
-## Data Mapper
+**Dinâmica.** _Em construção_.
+
+## Padrão Unit of Work
+Em situações complexas, a lógica negocial do cliente pode usar do padrão **Unit Of Work**, pelo qual é possível encapsular várias operações relacionadas que deveriam ser consistentes entre si ou que têm dependências relacionadas, e que submete itens ao repositório para que este proceda com seus comandos sobre a fonte de dados.
+
+## Padrão Data Mapper
 
 > Referências:
-> - [Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html); em MartinFowler.com.
+> - [Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html), em MartinFowler.com.
 
-O problema que surge ao lidar com a persistência de dados é que os objetos in-memory e a base de dados diferem nos mecanismos de estruturação de dados; cada mecanismo gera um esquema diferente que não combinam, cujo tráfego de dados pode causar prejuízos. Esse problema exige uma lógica complexa para processar a transferência de dados dos objetos in-memory e da base de dados.
+O problema que surge ao lidar com a persistência de dados é que os objetos em-memória e a base de dados diferem nos mecanismos de estruturação de dados; cada mecanismo gera um esquema diferente que não combinam, cujo tráfego de dados pode causar prejuízos. Esse problema exige uma lógica complexa para processar a transferência de dados dos objetos em-memória e da base de dados.
 
 O padrão Data Mapper representa uma camada de software em que reúne mappers que movem dados entre objetos e uma base de dados enquanto os mantém independentes entre si e de si mesmo. Isso significa que a lógica de negócio não precisa conhecer 
 
 O repositório atua como um mediador entre diferentes domínios, como é o caso da fonte de dados e a lógica de negócio que age sobre a entidade. Contudo, a 'tipagem' entre esses domínios são diferentes, e as consultas apropriadas à fonte ou a exposição dos dados recuperados às entidades negociais precisam ser tratadas, isto é, traduzidas entre representações específicas, o que pode ser realizado pelo padrão de Data Mapper.
+
+<br>
+
+---
 
 # .NET Core e MongoDB Driver (Padrão Repository)
 
