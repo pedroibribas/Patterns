@@ -1,6 +1,6 @@
 # O Padrão Repository
 
-> Baseado em [The Repository Pattern](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff649690(v=pandp.10)).
+> Baseado em [The Repository Pattern](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff649690(v=pandp.10)), da Microsoft.
 
 ## Introdução
 
@@ -31,121 +31,174 @@ As vantagens que se pode obter com o repositório são:
 
 **Dinâmica.** _Em construção_.
 
+
 ## Padrão Unit of Work
-Em situações complexas, a lógica negocial do cliente pode usar do padrão **Unit Of Work**, pelo qual é possível encapsular várias operações relacionadas que deveriam ser consistentes entre si ou que têm dependências relacionadas, e que submete itens ao repositório para que este proceda com seus comandos sobre a fonte de dados.
+> Ver [Unit of Work](https://martinfowler.com/eaaCatalog/unitOfWork.html), em MartinFowler.com.
+
+Um dos problemas com a persistência de dados é que as transações negociais podem gerar múltiplas requisições que tornam o acesso à base muito lento, ou gerar requisições inconsistentes.
+
+O padrão Unit Of Work serve para encapsular todas as operações que possam afetar a base de dados que se relacionam entre si e que deveriam ser consistentes. Assim, a Unit of Work entende por si o que precisa ser feito para alterar a base a partir do trabalho feito na lógica negocial.
+
 
 ## Padrão Data Mapper
+> Ver [Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html), em MartinFowler.com.
 
-> Referências:
-> - [Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html), em MartinFowler.com.
+O problema que surge ao lidar com a persistência de dados é que os objetos em-memória e a base de dados diferem nos mecanismos de estruturação de dados; cada mecanismo gera um esquema diferente que não coincidem. Esse problema exige uma lógica complexa para processar a transferência de dados dos objetos em-memória e da base de dados.
 
-O problema que surge ao lidar com a persistência de dados é que os objetos em-memória e a base de dados diferem nos mecanismos de estruturação de dados; cada mecanismo gera um esquema diferente que não combinam, cujo tráfego de dados pode causar prejuízos. Esse problema exige uma lógica complexa para processar a transferência de dados dos objetos em-memória e da base de dados.
+Em outras palavras, a 'tipagem' entre a lógica de negócio e a base de dados são diferentes, e as consultas apropriadas à base ou a exposição dos dados recuperados às entidades negociais precisam ser traduzidas em representações específicas.
 
-O padrão Data Mapper representa uma camada de software em que reúne mappers que movem dados entre objetos e uma base de dados enquanto os mantém independentes entre si e de si mesmo. Isso significa que a lógica de negócio não precisa conhecer 
+O padrão Data Mapper representa uma camada de software em que reúne mappers que movem dados entre objetos e uma base de dados enquanto os mantém independentes entre si e de si mesmo. Isso significa que a lógica de negócio não conhece o esquema da base de dados, sua linguagem, e até mesmo se a base de dados existe; e a base de dados não conhece o esquema dos objetos em-memória. Aliás, a camada de domínio não conhece o Data Mapper -- visto lidar com mappers.
 
-O repositório atua como um mediador entre diferentes domínios, como é o caso da fonte de dados e a lógica de negócio que age sobre a entidade. Contudo, a 'tipagem' entre esses domínios são diferentes, e as consultas apropriadas à fonte ou a exposição dos dados recuperados às entidades negociais precisam ser tratadas, isto é, traduzidas entre representações específicas, o que pode ser realizado pelo padrão de Data Mapper.
 
 <br>
 
 ---
 
-# .NET Core e MongoDB Driver (Padrão Repository)
+# .NET Core e MongoDB Driver com Padrão Repository
 
 ## Referências
-- [Create a web API with ASP.NET Core and MongoDB; Microsoft](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio)
-- [Build Your First .NET Core Application with MongoDB Atlas; MongoDB.com](https://www.mongodb.com/developer/languages/csharp/build-first-dotnet-core-application-mongodb-atlas/#building-a-poco-class-for-the-mongodb-document-model)
-- [Create a RESTful API with .NET Core and MongoDB; MongoDB.com.](https://www.mongodb.com/developer/languages/csharp/create-restful-api-dotnet-core-mongodb/)
+- [Create a web API with ASP.NET Core and MongoDB](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio), em Microsoft.com;
+- [Build Your First .NET Core Application with MongoDB Atlas; MongoDB.com](https://www.mongodb.com/developer/languages/csharp/build-first-dotnet-core-application-mongodb-atlas/#building-a-poco-class-for-the-mongodb-document-model), em MongoDb.com;
+- [Create a RESTful API with .NET Core and MongoDB; MongoDB.com.](https://www.mongodb.com/developer/languages/csharp/create-restful-api-dotnet-core-mongodb/), em MongoDb.com.
+- [Re-use](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/driver/connecting/#re-use); em MongoDb.github.io.
 
+## Código
+
+### Objeto de configuração de acesso à base
+- É necessário um objeto que mapeia e guarda as configurações de acesso à base de dados para a aplicação.
 ```csharp
-// API
-
+namespace BookStoreApi.Models;
+public class BookStoreDatabaseSettings
+{
+    public string ConnectionString { get; set; } = null!;
+    public string DatabaseName { get; set; } = null!;
+}
+```
+- Esse objeto é, então, registrado no container de injeção de dependência da aplicação.
+```csharp
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.Configure<MongoDbSettings>(
-  builder.Configuration.GetSection("MongoDatabase"));
+builder.Services.Configure<BookStoreDatabaseSettings>(
+  /* Apontar local onde as configurações de acesso estão definidas.
+   * E.g. builder.Configuration.GetSection("BookStoreDatabase"), se em appsettings.json. */);
+```
 
-// Interfaces
+### Unit Of Work
+- Uma Unit of Work serve como contexto de acesso à base, e expõe o acesso para o repositório de sua coleção específica.
+- O `MongoClient` lê a instância do servidor para rodar operações na base.
+- O método `IMongoDatabase.GetCollection<TDocument>(collection)` permite acessar dados de uma coleção específica, viabilizando operações CRUD nela. Ele retorna a representação da coleção `MongoCollection`, a qual recebe as operações CRUD.
+- O `TDocument` representa o tipo de objeto CLR na coleção.
+```csharp
+namespace Infrastructure.Context;
+public class MongoDbContext
+{
+  private readonly IMongoDatabase _db = null;
 
+  public MongoDbContext(IOptions<MongoDbSettings> settings)
+  {
+    MongoClient mongoClient = new(settings.Value.ConnectionString);
+    if (mongoClient != null)
+      _db = mongoClient.GetDatabase(settings.Value.DatabaseName);
+  }
+
+  public IMongoCollection GetCollection<T>(string collectionName)
+  {
+    return _db.GetCollection<T>(collectionName);
+  }
+
+  public IMongoCollection Collection<T>(string collectionName)
+  {
+    get
+    {
+      return _db.GetCollection<T>(collectionName);
+    }
+  }
+}
+```
+
+### Template do Repositório
+- O objeto `T` representa a entidade de negócio.
+```csharp
 namespace Domain.Interfaces.Repositories.Base
 {
   public interface IBaseRepository<T>
   {
+    Task<List<T>> GetAsync();
+    Task<T?> GetAsync(string id);
+    Task CreateAsync(T newEntity);
+    Task UpdateAsync(string id, T updatedEntity);
+    Task RemoveAsync(string id);
   }
 }
-
-namespace Domain.Interfaces.Repositories
+```
+- O repositório-base implementa as operações comuns a todos repositórios específicos, para centralizar essa lógica em um único ponto e evitar repetição, conforme padrão Template.
+```csharp
+namespace Infrastructure.Repositories.Base;
+public class BaseRepository<T> : IBaseRepository<T> where T : class
 {
-  public interface IPersonRepository : IBaseRepository<Person>
+  protected readonly IMongoCollection<T> _collection = null;
+
+  public BaseRepository(IOptions<MongoDbSettings> settings)
   {
-    Task<Domain.Entities.Person> GetByCpf(string cpf);
+    MongoDbConext context = new(settings);
+    
+    string collectionName = "";
+
+    _collection = context.GetCollection<T>(collectionName);
   }
+
+  protected async Task<List<T>> GetAsync() =>
+    await _collection.Find(_ => true).ToListAsync();
+
+  protected async Task<T?> GetAsync(string id) =>
+    await _collection.Find(x => x.Id == id).FirstOrDefaultAsync();
+
+  protected async Task CreateAsync(T newEntity) =>
+    await _collection.InsertOneAsync(newEntity);
+
+  protected async Task UpdateAsync(string id, T updatedEntity) =>
+    await _collection.ReplaceOneAsync(x => x.Id == id, updatedEntity);
+
+  protected async Task RemoveAsync(string id) =>
+    await _collection.DeleteOneAsync(x => x.Id == id);
 }
+```
 
-// Settings
+- DI: _TODO_
+```csharp
+builder.Services.AddSingleton<IBookRepository, BookRepository>();
+```
 
-namespace Infrastructure.Configuration
+
+### Repositório
+
+- O repositório fica exposto para a lógica de negócio via sua interface, visto que aquela ignora a lógica de interação com a fonte dos dados.
+- O repositório implementa o repositório-base, definindo a específica entidade negocial que representa.
+```csharp
+namespace Domain.Interfaces.Repositories;
+public interface IBookRepository : IBaseRepository<Book>
 {
-  public class MongoDbSettings
-  {
-    public string? ConnectionString { get; set; }
-    public string? Database { get; set; }
-    public string? CollectionName { get; set; }
-  }
+  Task<Book> GetByGenre(string genreName);
 }
+```
 
-// Unit of Work para acesso à data source
-
-namespace Infrastructure.Context
+- O contexto é instanciado no repositório via DI. Portanto, o contexto também deve estar registrado no container de DI.
+```csharp
+namespace Infrastructure.Repositories.Book;
+public class BookRepository : BaseRepository<Book>, IBookRepository
 {
-  public class PersonContext
+  public BookRepository(MongoDbContext context) : base(context)
   {
-    private readonly IMongoDatabase _database = null;
-
-    public PersonContext(IOptions<MongoDbSettings> settings)
-    {
-      var client = new MongoClient(settings.Value.ConnectionString);
-      if (client != null)
-        _database = client.GetDatabase(settings.Value.Database);
-    }
-
-    public IMongoCollection<Person> People(string name)
-    {
-      get { return _database.GetCollection<Person>("Person"); }
-    }
+  }
+  
+  public async Task<Book> GetByGenre(string genreName)
+  {
+    FilterDefinition<Book> filter = Builders<Book>.Filter.Eq("Genre", genreName);
+    return await _collection.Find(filter).ToListAsync();
   }
 }
+```
 
-// Repositórios
-
-namespace Infrastructure.Repositories.Base
-{
-  public class BaseRepository<T> : IBaseRepository<T> where T : class
-  {
-    private readonly MongoDbContext _context = null;
-
-    protected readonly FilterDefinition<T> FilterBuilder;
-    protected readonly UpdateOptions UpdateOptions;
-
-    public BaseRepository()
-    {
-      _context = new MongoDbContext(MongoDbSettings);
-
-      FilterBuilder = Builders<T>.Filter;
-      UpdateOptions = new UpdateOptions { isUpsert = true; };
-    }
-  }
-}
-
-namespace Infrastructure.Repositories.Person
-{
-  public class PersonRepository : BaseRepository<Domain.Entities.Person>, IPersonRepository
-  {
-    public PersonRepository(IMongoDbContext context) : base(context) { }
-    public Task<Domain.Entities.Person> GetByCpf(string cpf)
-    {
-      FilterDefinition<Domain.Entities.Person> filter = FilterBuilder.Eq("Cpf", cpf);
-      return _db.Find(filter).FirstOrDefault();
-    }
-  }
-}
-
+- O repositório é registrado no container de DI.
+```csharp
+builder.Services.AddSingleton<IBookRepository, BookRepository>();
 ```
