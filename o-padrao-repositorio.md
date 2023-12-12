@@ -104,14 +104,6 @@ public class MongoDbContext
   {
     return _db.GetCollection<T>(collectionName);
   }
-
-  public IMongoCollection Collection<T>(string collectionName)
-  {
-    get
-    {
-      return _db.GetCollection<T>(collectionName);
-    }
-  }
 }
 ```
 
@@ -133,23 +125,21 @@ namespace Domain.Interfaces.Repositories.Base
 - O repositório-base implementa as operações comuns a todos repositórios específicos, para centralizar essa lógica em um único ponto e evitar repetição, conforme padrão Template.
 ```csharp
 namespace Infrastructure.Repositories.Base;
-public class BaseRepository<T> : IBaseRepository<T> where T : class
+public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
 {
-  protected readonly IMongoCollection<T> _collection = null;
+  protected readonly IMongoCollection<TEntity> _collection = null;
 
   public BaseRepository(IOptions<MongoDbSettings> settings)
   {
     MongoDbConext context = new(settings);
-    
-    string collectionName = "";
-
-    _collection = context.GetCollection<T>(collectionName);
+    _collection = context.GetCollection<TEntity>(
+      typeof(TEntity).Name);
   }
 
-  protected async Task<List<T>> GetAsync() =>
+  protected async Task<List<TEntity>> GetAsync() =>
     await _collection.Find(_ => true).ToListAsync();
 
-  protected async Task<T?> GetAsync(string id) =>
+  protected async Task<TEntity?> GetAsync(string id) =>
     await _collection.Find(x => x.Id == id).FirstOrDefaultAsync();
 
   protected async Task CreateAsync(T newEntity) =>
