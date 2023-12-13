@@ -4,7 +4,7 @@
 - [Microsoft. The Repository Pattern](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff649690(v=pandp.10))
 - [Microsoft. Design the infrastructure persistence layer](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design)
 - [Edward Hieatt e Rob Mee. Repository pattern](https://martinfowler.com/eaaCatalog/repository.html)
-- [Martin Fowler. DDD Aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html)
+
 
 ## Introdução
 
@@ -36,7 +36,12 @@ As vantagens que se pode obter com o repositório são:
 
 _[Sobre lidar com dois tipos de dados diferentes...]_
 
-## O Repositório e Aggregates
+## Padrão Aggregate
+- [Microsoft. Design the infrastructure persistence layer](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design)
+- [Martin Fowler. DDD Aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html)
+
+O aggregate é um padrão DDD que representa um conceito dominial, representado por um conjunto de objetos dominiais que podem ser tratados como uma única unidade, de modo que o aggregate-root é o objeto exposto à aplicação. E.g., o aggregate-root _Pedido_ agrega os value-objects _Endereço_ e _ItemDoPedido_.
+
 O repositório deve corresponder a um aggregate-root, numa relação de um-para-um, especialmente para manter a consistência transacional, i.e., a atualização de dados.
 
 Em suma, um repositório permite popular dados em-memória que vieram da base na forma de entidades dominiais, e assim as entidades em memória podem ser mudadas e então re-persistidas na base via transações. A partir de um comando de mudança, os dados são atualizados em memória para depois os dados serem atualizados na base via transação. Para manter a consistência transacional entre todos os objetos de um aggregate-root, um único repositório deve corresponder a um único aggregate-root.
@@ -46,15 +51,15 @@ E, também, apenas aggregates-roots devem ter repositórios.
 Para assegurar essa regra no C#, convém que os repositórios implementem um tipo de repositório genérico relacionado a um único agregado, como o seguinte: `interface IRepository<T> where T : IAggregateRoot`.
 
 ## Padrão Unit of Work
-> Ver [Unit of Work](https://martinfowler.com/eaaCatalog/unitOfWork.html), em MartinFowler.com.
+- [Martin Fowler. Unit of Work](https://martinfowler.com/eaaCatalog/unitOfWork.html)
 
-Um dos problemas com a persistência de dados é que as transações negociais podem gerar múltiplas requisições que tornam o acesso à base muito lento, ou gerar requisições inconsistentes.
+Um dos problemas com a persistência de dados é que múltiplas requisições relacionadas não precisam, cada uma, gerar uma transação própria. Se cada requisição gerar uma transação, o acesso aos dados pode ficar lento ou gerar inconsistências. É o caso, por exemplo, do registro de um usuário, em que as operações de inserção, atualização e deleção podem ser tratadas em uma transação única.
 
 O padrão Unit Of Work serve para encapsular todas as operações que possam afetar a base de dados que se relacionam entre si e que deveriam ser consistentes. Assim, a Unit of Work entende por si o que precisa ser feito para alterar a base a partir do trabalho feito na lógica negocial.
 
 
 ## Padrão Data Mapper
-> Ver [Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html), em MartinFowler.com.
+- [Martin Fowler. Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html)
 
 O problema que surge ao lidar com a persistência de dados é que os objetos em-memória e a base de dados diferem nos mecanismos de estruturação de dados; cada mecanismo gera um esquema diferente que não coincidem. Esse problema exige uma lógica complexa para processar a transferência de dados dos objetos em-memória e da base de dados.
 
@@ -77,7 +82,17 @@ O padrão Data Mapper representa uma camada de software em que reúne mappers qu
 - [MongoDb Reference. Re-use](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/driver/connecting/#re-use)
 - [MongoDb Reference. Mapping Classes](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/bson/mapping/)
 
+## Document-oriented Database
+
+Quando se usa uma base de dados NoSQL na camada de infraestrutura, normalmente não se usa um ORM, como o EF Core, mas sim a API fornecida pelo motor NoSQL, como é o caso do MongoDB. 
+
+Ainda assim, ao usar uma base de dados NoSQL como uma document-oriented, a forma de se desenhar os modelos conforme o padrão Aggregate é em parte semelhante, considerando a identificação dos aggregate-roots, entidades-filhas e classes value-object.
+
+[_Continuar_]
+
 ## Código
+
+
 
 ### Objeto de configuração de acesso à base
 - É necessário um objeto que mapeia e guarda as configurações de acesso à base de dados para a aplicação.
