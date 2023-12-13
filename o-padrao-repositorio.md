@@ -1,6 +1,10 @@
 # O Padrão Repository
 
-> Baseado em [The Repository Pattern](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff649690(v=pandp.10)), da Microsoft.
+## Referências
+- [Microsoft. The Repository Pattern](https://learn.microsoft.com/en-us/previous-versions/msp-n-p/ff649690(v=pandp.10))
+- [Microsoft. Design the infrastructure persistence layer](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design)
+- [Edward Hieatt e Rob Mee. Repository pattern](https://martinfowler.com/eaaCatalog/repository.html)
+- [Martin Fowler. DDD Aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html)
 
 ## Introdução
 
@@ -21,7 +25,8 @@
 - Aplicar um modelo de domínio para simplificar lógicas de negócio complexas.
 
 ## Conceito
-O repositório é a camada que assume a lógica de interação com a fonte de dados da aplicação, isto é, a lógica que mapeia a entidade negocial para dados da fonte e vice-versa, a que recupera dados da fonte e a que persiste mudanças da entidade na fonte de dados.
+
+O padrão Repository é um padrão DDD pensado para manter responsabilidades de persistência fora do modelo de domínio. No padrão Repository, as abstrações de persistência - as interfaces - são mantidas dentro do domínio, e as implementações dessas abstrações são definidas em outro local da aplicação, na forma de adaptadores próprios para persistência. A implementação do repositório são classes que encapsulam a lógica de acesso a fontes de dados.
 
 As vantagens que se pode obter com o repositório são:
 - Permite centralizar a lógica de acesso a dados;
@@ -29,8 +34,16 @@ As vantagens que se pode obter com o repositório são:
 - Provê uma arquitetura flexível para se adaptar conforme o design do resto da aplicação evolui;
 - Viabiliza que a lógica de negócio seja agnóstica ao tipo de dados que constitui a fonte dos dados ou qual é a sua linguagem, bastando que a camada de regra de negócio apenas use a interface do repositório específico.
 
-**Dinâmica.** _Em construção_.
+_[Sobre lidar com dois tipos de dados diferentes...]_
 
+## O Repositório e Aggregates
+O repositório deve corresponder a um aggregate-root, numa relação de um-para-um, especialmente para manter a consistência transacional, i.e., a atualização de dados.
+
+Em suma, um repositório permite popular dados em-memória que vieram da base na forma de entidades dominiais, e assim as entidades em memória podem ser mudadas e então re-persistidas na base via transações. A partir de um comando de mudança, os dados são atualizados em memória para depois os dados serem atualizados na base via transação. Para manter a consistência transacional entre todos os objetos de um aggregate-root, um único repositório deve corresponder a um único aggregate-root.
+
+E, também, apenas aggregates-roots devem ter repositórios.
+
+Para assegurar essa regra no C#, convém que os repositórios implementem um tipo de repositório genérico relacionado a um único agregado, como o seguinte: `interface IRepository<T> where T : IAggregateRoot`.
 
 ## Padrão Unit of Work
 > Ver [Unit of Work](https://martinfowler.com/eaaCatalog/unitOfWork.html), em MartinFowler.com.
@@ -57,10 +70,12 @@ O padrão Data Mapper representa uma camada de software em que reúne mappers qu
 # .NET Core e MongoDB Driver com Padrão Repository
 
 ## Referências
-- [Create a web API with ASP.NET Core and MongoDB](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio), em Microsoft.com;
-- [Build Your First .NET Core Application with MongoDB Atlas; MongoDB.com](https://www.mongodb.com/developer/languages/csharp/build-first-dotnet-core-application-mongodb-atlas/#building-a-poco-class-for-the-mongodb-document-model), em MongoDb.com;
-- [Create a RESTful API with .NET Core and MongoDB; MongoDB.com.](https://www.mongodb.com/developer/languages/csharp/create-restful-api-dotnet-core-mongodb/), em MongoDb.com.
-- [Re-use](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/driver/connecting/#re-use); em MongoDb.github.io.
+- [Microsoft. Create a web API with ASP.NET Core and MongoDB](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio)
+- [Microsoft. Use NoSQL databases as a persistence infrastructure](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/nosql-database-persistence-infrastructure)
+- [Nic Raboy. Build Your First .NET Core Application with MongoDB Atlas](https://www.mongodb.com/developer/languages/csharp/build-first-dotnet-core-application-mongodb-atlas/#building-a-poco-class-for-the-mongodb-document-model)
+- [Nic Raboy. Create a RESTful API with .NET Core and MongoDB](https://www.mongodb.com/developer/languages/csharp/create-restful-api-dotnet-core-mongodb/)
+- [MongoDb Reference. Re-use](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/driver/connecting/#re-use)
+- [MongoDb Reference. Mapping Classes](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/bson/mapping/)
 
 ## Código
 
@@ -106,13 +121,15 @@ public class MongoDbContext
   }
 }
 ```
+- DI
+> It is recommended to store a MongoClient instance in a global place, either as a static variable or in an IoC container with a singleton lifetime - [_Re-use_](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/driver/connecting/#re-use).
 
 ### Template do Repositório
 - O objeto `T` representa a entidade de negócio.
 ```csharp
 namespace Domain.Interfaces.Repositories.Base
 {
-  public interface IBaseRepository<T>
+  public interface IRepository<T> where T : IAggregateRoot
   {
     Task<List<T>> GetAsync();
     Task<T?> GetAsync(string id);
@@ -125,21 +142,21 @@ namespace Domain.Interfaces.Repositories.Base
 - O repositório-base implementa as operações comuns a todos repositórios específicos, para centralizar essa lógica em um único ponto e evitar repetição, conforme padrão Template.
 ```csharp
 namespace Infrastructure.Repositories.Base;
-public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
+public class BaseRepository<T> : IRepository<T> where T : IAggregateRoot
 {
-  protected readonly IMongoCollection<TEntity> _collection = null;
+  protected readonly IMongoCollection<T> _collection = null;
 
   public BaseRepository(IOptions<MongoDbSettings> settings)
   {
     MongoDbConext context = new(settings);
-    _collection = context.GetCollection<TEntity>(
-      typeof(TEntity).Name);
+    _collection = context.GetCollection<T>(
+      typeof(T).Name);
   }
 
-  protected async Task<List<TEntity>> GetAsync() =>
+  protected async Task<List<T>> GetAsync() =>
     await _collection.Find(_ => true).ToListAsync();
 
-  protected async Task<TEntity?> GetAsync(string id) =>
+  protected async Task<T?> GetAsync(string id) =>
     await _collection.Find(x => x.Id == id).FirstOrDefaultAsync();
 
   protected async Task CreateAsync(T newEntity) =>
