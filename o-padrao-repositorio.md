@@ -209,19 +209,23 @@ public interface IBookRepository : IRepository<Book>
 }
 ```
 
+
 ### Repositório-Base
 ```csharp
 namespace Infrastructure.Repositories.Base;
 public class BaseRepository<T> : IRepository<T> where T : class
 {
   protected readonly IMongoCollection<T> _collection = null;
+  private readonly Dictionary<string, CollectionAttribute> Atributos;
 
   public BaseRepository(IOptions<MongoDbSettings> settings)
   {
+    string collectionName = Assembly.GetExecutingAssembly()
     MongoDbConext context = new(settings);
-    _collection = context.GetCollection<T>(
-      typeof(T).Name);
+    _collection = context.GetCollection<T>(CollectionName());
   }
+
+  protected virtual string CollectionName();
 
   protected async Task<List<T>> GetAsync() =>
     await _collection.Find(_ => true).ToListAsync();
@@ -251,11 +255,13 @@ public class BookRepository : BaseRepository<Book>, IBookRepository
   public BookRepository(MongoDbContext context) : base(context)
   {
   }
+
+  protected override string CollectionName => "Books";
   
   public async Task<Book> GetByGenre(string genreName)
   {
-    FilterDefinition<Book> filter = Builders<Book>.Filter.Eq("Genre", genreName);
-    return await _collection.Find(filter).ToListAsync();
+    return await _collection.Find(x => x.Genre == genreName)
+      .ToListAsync();
   }
 }
 ```
