@@ -72,6 +72,8 @@ O padrão Data Mapper representa uma camada de software em que reúne mappers qu
 
 ---
 
+<br>
+
 # .NET Core e MongoDB Driver com Padrão Repository
 
 ## Referências
@@ -82,20 +84,63 @@ O padrão Data Mapper representa uma camada de software em que reúne mappers qu
 - [MongoDb Reference. Re-use](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/driver/connecting/#re-use)
 - [MongoDb Reference. Mapping Classes](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/bson/mapping/)
 
-## Document-oriented Database
+## Document-Oriented Database
 
-Quando se usa uma base de dados NoSQL na camada de infraestrutura, normalmente não se usa um ORM, como o EF Core, mas sim a API fornecida pelo motor NoSQL, como é o caso do MongoDB. 
+Quando se usa uma base de dados NoSQL na camada de infraestrutura, normalmente não se usa um ORM, como o EF Core, mas sim a API fornecida pelo motor NoSQL, como é o caso do MongoDB e outros.
 
-Ainda assim, ao usar uma base de dados NoSQL como uma document-oriented, a forma de se desenhar os modelos conforme o padrão Aggregate é em parte semelhante, considerando a identificação dos aggregate-roots, entidades-filhas e classes value-object.
+Mesmo assim, ao usar uma base NoSQL como uma document-oriented, a forma de se implementar modelos no padrão Aggregate é em parte semelhante, como na identificação dos aggregate-roots, entidades-filhas e classes value-object; porém, com mais flexibilidade do que ao usar EF Core, visto não precisar de um mapeamento relacional.
 
-[_Continuar_]
+Isso não quer dizer que os modelos POCO podem ser adaptados facilmente para suportar diferentes infraestruturas de persistência, por exemplo no caso de reaproveitá-los para uma base relacional, visto que cada estilo de persistência impõe diversas limitações próprias e trade-offs. O modelo deve ser implementado a partir de um entendimento de como os dados serão usados em cada base particularmente.
 
-## Código
+Na base orientada a documento, um aggregate é implementado como um único documento, de modo que os aggregates se parecem com documentos serializados.
 
 
+
+## Modelamento
+- [Microsoft. Data modeling in Azure Cosmos DB](https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/modeling-data)
+- [Microsoft. Use NoSQL databases as a persistence infrastructure](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/nosql-database-persistence-infrastructure)
+```csharp
+namespace BookStoreApi.Models;
+public class Locations
+{
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; }
+    public int LocationId { get; set; }
+    public string Code { get; set; }
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Parent_Id { get; set; }
+    public string Description { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public GeoJsonPoint<GeoJson2DGeographicCoordinates> Location { get; private set; }
+
+    public void SetLocation(double lon, double lat) => SetPosition(lon, lat);
+
+    private void SetPosition(double lon, double lat)
+    {
+        Latitude = lat;
+        Longitude = lon;
+        Location = new GeoJsonPoint<GeoJson2DGeographicCoordinates>(
+            new GeoJson2DGeographicCoordinates(lon, lat));
+    }
+}
+```
+
+## Implementação
+1. Objeto que guarda e disponibiliza as configurações de acesso à base.
+2. Contexto para acesso à coleção mongo.
+3. Abstração do repositório.
+    - Opcionalmente, abstração `IRepository`.
+4. Implementação do repositório.
+    - Opcionalmente, implementação do repositório-base.
+5. No container de DI da aplicação:
+    - Instanciação do objeto de configuração com dados mapeados.
+    - Registro do contexto.
+    - Registro do repositório (e repositório-base).
 
 ### Objeto de configuração de acesso à base
-- É necessário um objeto que mapeia e guarda as configurações de acesso à base de dados para a aplicação.
+- Objeto que mapeia e guarda as configurações de acesso à base de dados para a aplicação.
 ```csharp
 namespace BookStoreApi.Models;
 public class BookStoreDatabaseSettings
@@ -104,7 +149,7 @@ public class BookStoreDatabaseSettings
     public string DatabaseName { get; set; } = null!;
 }
 ```
-- Esse objeto é, então, registrado no container de injeção de dependência da aplicação.
+- Esse objeto é registrado no container de injeção de dependência da aplicação.
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<BookStoreDatabaseSettings>(
@@ -136,28 +181,38 @@ public class MongoDbContext
   }
 }
 ```
-- DI
-> It is recommended to store a MongoClient instance in a global place, either as a static variable or in an IoC container with a singleton lifetime - [_Re-use_](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/driver/connecting/#re-use).
-
-### Template do Repositório
-- O objeto `T` representa a entidade de negócio.
+- O contexto é registrado no container de DI.
+> "It is recommended to store a MongoClient instance in a global place, either as a static variable or in an IoC container with a singleton lifetime" - [_Re-use_](https://mongodb.github.io/mongo-csharp-driver/2.14/reference/driver/connecting/#re-use).
 ```csharp
-namespace Domain.Interfaces.Repositories.Base
+// TODO
+```
+
+### Abstrações (Domínio)
+- Template de repositório relativo a objeto genérico que representa um aggregate-root.
+```csharp
+namespace Domain.Interfaces.Repositories.Base;
+public interface IRepository<T> where T : class // Ideia: where T : IAggregateRoot
 {
-  public interface IRepository<T> where T : IAggregateRoot
-  {
-    Task<List<T>> GetAsync();
-    Task<T?> GetAsync(string id);
-    Task CreateAsync(T newEntity);
-    Task UpdateAsync(string id, T updatedEntity);
-    Task RemoveAsync(string id);
-  }
+  Task<List<T>> GetAsync();
+  Task<T?> GetAsync(string id);
+  Task CreateAsync(T newEntity);
+  Task UpdateAsync(string id, T updatedEntity);
+  Task RemoveAsync(string id);
 }
 ```
-- O repositório-base implementa as operações comuns a todos repositórios específicos, para centralizar essa lógica em um único ponto e evitar repetição, conforme padrão Template.
+- Abstrações dos repositórios específicos, que herdam do `IRepository`.
+```csharp
+namespace Domain.Interfaces.Repositories;
+public interface IBookRepository : IRepository<Book>
+{
+  Task<Book> GetByGenre(string genreName);
+}
+```
+
+### Repositório-Base
 ```csharp
 namespace Infrastructure.Repositories.Base;
-public class BaseRepository<T> : IRepository<T> where T : IAggregateRoot
+public class BaseRepository<T> : IRepository<T> where T : class
 {
   protected readonly IMongoCollection<T> _collection = null;
 
@@ -184,28 +239,13 @@ public class BaseRepository<T> : IRepository<T> where T : IAggregateRoot
     await _collection.DeleteOneAsync(x => x.Id == id);
 }
 ```
-
-- DI: _TODO_
 ```csharp
-builder.Services.AddSingleton<IBookRepository, BookRepository>();
+builder.Services.AddSingleton<IRepository, BaseRepository>();
 ```
-
 
 ### Repositório
-
-- O repositório fica exposto para a lógica de negócio via sua interface, visto que aquela ignora a lógica de interação com a fonte dos dados.
-- O repositório implementa o repositório-base, definindo a específica entidade negocial que representa.
 ```csharp
-namespace Domain.Interfaces.Repositories;
-public interface IBookRepository : IBaseRepository<Book>
-{
-  Task<Book> GetByGenre(string genreName);
-}
-```
-
-- O contexto é instanciado no repositório via DI. Portanto, o contexto também deve estar registrado no container de DI.
-```csharp
-namespace Infrastructure.Repositories.Book;
+namespace Infrastructure.Repositories;
 public class BookRepository : BaseRepository<Book>, IBookRepository
 {
   public BookRepository(MongoDbContext context) : base(context)
@@ -219,8 +259,6 @@ public class BookRepository : BaseRepository<Book>, IBookRepository
   }
 }
 ```
-
-- O repositório é registrado no container de DI.
 ```csharp
 builder.Services.AddSingleton<IBookRepository, BookRepository>();
 ```
