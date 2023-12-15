@@ -1,4 +1,6 @@
-# Refatoração
+# Refatoração e Padrões de Código
+
+## Refatoração
 - Refatoração
     - Conceito
     - Teste
@@ -8,9 +10,9 @@
 - **Referência bibliográfica:** _Refactoring: Improving the Design of Existing Code_; _The Pragmatic Programmer_.
 - [Architect Modern Web Applications with ASP.NET Core and Azure](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/)
 
-# Pilares da Programação Orientada a Objeto
+## Pilares da Programação Orientada a Objeto
 - Encapsulamento
-## Encapsulamento
+### Encapsulamento
 O pilar do encapsulamento (_encapsulation_) lida com a segregação da informação e sua manipulação dentro de uma única classe. Sua finalidade é criar códigos mais fáceis de entender, concentrar a manutenção de uma informação, e manter a integridade da informação. O encapsulamento é feito através da limitação do acesso a propriedades e métodos, bem como na limitação do retorno dos métodos.
 ### Coleções .NET
 O (_Diretrizes para Coleções_)[https://learn.microsoft.com/pt-br/dotnet/standard/design-guidelines/guidelines-for-collections] trata de boas práticas no uso de coleções de objetos que tornam o código mais seguro, especialmente coleções que implementam o tipo `IEnumerable<T>`, sendo algumas as seguintes:
@@ -19,8 +21,8 @@ O (_Diretrizes para Coleções_)[https://learn.microsoft.com/pt-br/dotnet/standa
 - Para acessar propriedades de coleções de leitura/gravação, optar pelo tipo `Collection<T>` ou classes da sua hierarquia.
 - Preferir `IEnumerable<T>` a `ICollection<T>` para acessar propriedades como `Count`.
 
-# Legibilidade
-## Usar código para explicar o código
+## Legibilidade
+### Usar código para explicar o código
 - **Comentários:** Depender de comentários para explicar um código é ruim, porque o comentário dificilmente será atualizado quando o código for alterado. Nesse caso, convém limpar os comentários substituindo-os por variáveis com nomes signifiativos.
 - **Nomes significativos:** O ideal é dar nomes significativos para as variáveis, isto é, nomes que efetivamente representam o seu valor (v. documentação da Microsoft). O mesmo vale para arquivos e métodos.
 - **Nomes grandes:** O nome significativo pode ficar grande, o que não é um problema.
@@ -32,18 +34,18 @@ O (_Diretrizes para Coleções_)[https://learn.microsoft.com/pt-br/dotnet/standa
 - **Exração de classes:** Na POO, o ideal é isolar instruções em classes específicas.
 - **Parâmetro nomeado:** Nomear o parâmetro ao chamar um método melhora a legibilidade do código.
 
-# Código Ambíguo
+### Código Ambíguo
 - Problemas do código repetido
 - DRY
 - Attribute .NET
-## DRY
+### Padrão DRY
 O código repetido - ou duplicado, ou ambíguo - pode complicar a manutenção, porque uma informação repetida cria diferentes pontos de manutenção iguais, já que a atualização da informação exige a atualização de cada ponto diferente. O ideal é ter uma única fonte para a informação, reutilizável, para concentrar a manutenção em um único lugar. Isso significa aplicar o _Don't Repeate Yourself_. Disse Alexandre Aquiles (_Desbravando o Solid_, 2022, p. 38 ): “Todo bloco de conhecimento deve ter uma representação única, sem ambiguidades e dominante num sistema”.
-## Extração de classe
+### Extração de classe
 A instrução repetida pode ser centralizada em um único arquivo em uma classe própria. Por exemplo, a lógica responsável pela leitura de arquivos pode estar em uma classe apropriada para essa finalidade, sendo invocada pelas classes que precisarem dela.
-## Extração de função
+### Extração de função
 A instrução repetida pode estar em um método próprio dentro de uma mesma classe.
 
-## Atributos .NET Personalizados
+### Atributos .NET Personalizados
 - [Microsoft. Create custom attributes](https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/creating-custom-attributes)
 - [Microsoft. Attributes (.NET Framework design guidelines)](https://learn.microsoft.com/en-us/dotnet/standard/design-guidelines/attributes)
 
@@ -88,3 +90,4 @@ public class ClasseDeDemonstracao {
     // [*] Acesso em tempo de execução no assembly com Reflexão, e acesso aos tipos de metadados do assembly.
 }
 ```
+
