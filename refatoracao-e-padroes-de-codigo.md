@@ -22,6 +22,7 @@ O (_Diretrizes para Coleções_)[https://learn.microsoft.com/pt-br/dotnet/standa
 - Preferir `IEnumerable<T>` a `ICollection<T>` para acessar propriedades como `Count`.
 
 ## Legibilidade
+
 ### Usar código para explicar o código
 - **Comentários:** Depender de comentários para explicar um código é ruim, porque o comentário dificilmente será atualizado quando o código for alterado. Nesse caso, convém limpar os comentários substituindo-os por variáveis com nomes signifiativos.
 - **Nomes significativos:** O ideal é dar nomes significativos para as variáveis, isto é, nomes que efetivamente representam o seu valor (v. documentação da Microsoft). O mesmo vale para arquivos e métodos.
@@ -38,10 +39,13 @@ O (_Diretrizes para Coleções_)[https://learn.microsoft.com/pt-br/dotnet/standa
 - Problemas do código repetido
 - DRY
 - Attribute .NET
+
 ### Padrão DRY
 O código repetido - ou duplicado, ou ambíguo - pode complicar a manutenção, porque uma informação repetida cria diferentes pontos de manutenção iguais, já que a atualização da informação exige a atualização de cada ponto diferente. O ideal é ter uma única fonte para a informação, reutilizável, para concentrar a manutenção em um único lugar. Isso significa aplicar o _Don't Repeate Yourself_. Disse Alexandre Aquiles (_Desbravando o Solid_, 2022, p. 38 ): “Todo bloco de conhecimento deve ter uma representação única, sem ambiguidades e dominante num sistema”.
+
 ### Extração de classe
 A instrução repetida pode ser centralizada em um único arquivo em uma classe própria. Por exemplo, a lógica responsável pela leitura de arquivos pode estar em uma classe apropriada para essa finalidade, sendo invocada pelas classes que precisarem dela.
+
 ### Extração de função
 A instrução repetida pode estar em um método próprio dentro de uma mesma classe.
 
@@ -91,3 +95,30 @@ public class ClasseDeDemonstracao {
 }
 ```
 
+### Extensibilidade
+
+A invocação de um método que recebe um parâmetro para retornar uma formatação pode ser ruim de se ler. Por exemplo, o método `var csv = ConverterStringParaCsv(texto)` é ruim de se ler.
+
+Para melhorar a legibilidade desse trecho de código, é possível usar o método como uma extensão do objeto sobre o qual o método tratará. Ainda com o mesmo exemplo, o código de conversão ficaria `texto.ConverterStringParaCsv()`.
+
+Um código extensível é gerado a partir de um tipo estático, e o método deve ser estático e receber como parâmetro um `this` precedendo o parâmetro que representa o valor extendido.
+
+O código do exemplo seria algo assim:
+
+```csharp
+public static class Conversor
+{
+  public static string ConverterStringParaCsv(this string texto)
+  {
+    // ...
+  }
+}
+```
+
+### Null Coalescing
+
+O problema de se usar o padrão `if-else` é que o código pode se tornar desnecessariamente verboso.
+
+O operador null-coalescing `??` é uma alternativa ao if-else, que reduz as linhas de código quando se verifica que a expressão validada é nula, para provocar o retorno da segunda expressão.
+
+Contudo, o operador null-coalescing pode acabar prejudicando a legibilidade do código, de modo que usá-lo não é uma unanimidade, e dependerá do caso.

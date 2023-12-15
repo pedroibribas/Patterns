@@ -20,7 +20,8 @@ O padrão Arrange-Act-Assert é uma forma de se organizar o código de um teste.
 - Código para o act, que é efetivamente a invocação do código a ser testado;
 - Código para o assert, que é o código para as verificações que incidem sobre o resultado da ação, e que representa as expectativas do desenvolvedor.
 
-Exemplo:
+Exemplos:
+
 _Teste de igualdade no padrão AAA com xUnit:_
 ```csharp
 [Fact]
@@ -34,6 +35,20 @@ public void Add_EmptyString_ReturnsZero()
 
     // Assert
     Assert.Equal(0, actual);
+}
+```
+
+_Teste de exceção no padrão AAA com xUnit:_
+```csharp
+[Fact]
+public void Add_NullString_ThrowsArgumentNullException()
+{
+    // Arrange
+    var stringCalculator = new StringCalculator();
+    var number = null;
+
+    // Act + Assert
+    Assert.Equal<ArgumentNullException>(() => stringCalculator.Add(number));
 }
 ```
 
