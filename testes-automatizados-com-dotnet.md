@@ -11,6 +11,13 @@ _[Em construção...]_
 - [Microsoft. Unit testing C# in .NET Core using dotnet test and xUnit](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test)
 
 ### Camada independente
+A cadamada de testes deve funcionar independentemente das outras camadas, como por ex. da API Web.
+
+### Nomenclaturas
+- `QuandoStringVaziaDeveLancarArgumentException`
+- `WhenEmptyStringShouldThrowArgumentException`
+- [Operação_Cenário_Expectativa] `Add_EmptyString_ThrowsArgumentException`
+
 _[Em construção...]_
 
 ### Padrão Arrange-Act-Assert - AAA
