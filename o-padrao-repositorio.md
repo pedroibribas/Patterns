@@ -158,6 +158,8 @@ builder.Services.Configure<BookStoreDatabaseSettings>(
 ```
 
 ### Unit Of Work
+- [Microsoft. Tempo de vida, configuração e inicialização do DbContext](https://learn.microsoft.com/pt-br/ef/core/dbcontext-configuration/#dbcontext-in-dependency-injection-for-aspnet-core)
+- [Connection Strings](https://learn.microsoft.com/en-us/ef/core/miscellaneous/connection-strings)
 - Uma Unit of Work serve como contexto de acesso à base, e expõe o acesso para o repositório de sua coleção específica.
 - O `MongoClient` lê a instância do servidor para rodar operações na base.
 - O método `IMongoDatabase.GetCollection<TDocument>(collection)` permite acessar dados de uma coleção específica, viabilizando operações CRUD nela. Ele retorna a representação da coleção `MongoCollection`, a qual recebe as operações CRUD.
