@@ -65,3 +65,4 @@ O cenário é uma classe que recebe os múltiplos casos de teste.
 ### Padrão Test-Driven Design - TDD
 O teste orienta a codificação, de forma que a implementação do código precisa passar no teste.
 
+### Mock
