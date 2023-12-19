@@ -63,38 +63,34 @@ public class Locations
     - Registro do contexto.
     - Registro do repositório (e repositório-base).
 
-### Objeto de configuração de acesso à base
-- Objeto que mapeia e guarda as configurações de acesso à base de dados para a aplicação.
-```csharp
-namespace WebApi.Models;
+## Configurações de acesso à base
 
+### Mapeando configurações do `appsettings.json`
+As configurações de acesso são definidas no `appsettings.json`:
+```json
+{
+  "MongoDatabase": {
+    "ConnectionString": "mongodb://localhost:27017",
+    "DatabaseName": "MinhaBaseMongoDb"
+  }
+}
+```
+As configurações são mapeadas e guardadas em um objeto de opções.
+```csharp
+namespace Infrastructure;
 public class MongoDbSettings
 {
     public string ConnectionString { get; set; } = null!;
     public string DatabaseName { get; set; } = null!;
 }
-
 ```
-- Esse objeto é registrado no container de injeção de dependência da aplicação.
-- Exemplos:
+O objeto é registrado no container de injeção de dependência da aplicação.
 ```csharp
-// # Mapeando configurações do MongoDB.
 builder.Services.Configure<MongoDbSettings>(
   builder.Configuration.GetSection("MongoDatabase"));
-
-// # Mapeando contexto NoSQL.
-/**
- * Base de dados
- * Registro da subclasse DbContext chamada BaseContext como um serviço 'Scoped'
- * no container de injeção de dependência do ASP.NET Core.
- * Ver sobre secrets em https://learn.microsoft.com/en-us/ef/core/miscellaneous/connection-strings
- */
-builder.Services.AddDbContext<BaseDbContext>(opts =>
-  opts.UseNpgsql(
-    builder.Configuration.GetConnectionString("Base")));
 ```
 
-### Unit Of Work
+## Unit Of Work
 - [Microsoft. Tempo de vida, configuração e inicialização do DbContext](https://learn.microsoft.com/pt-br/ef/core/dbcontext-configuration/#dbcontext-in-dependency-injection-for-aspnet-core)
 - [Connection Strings](https://learn.microsoft.com/en-us/ef/core/miscellaneous/connection-strings)
 - Uma Unit of Work serve como contexto de acesso à base, e expõe o acesso para o repositório de sua coleção específica.
