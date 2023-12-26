@@ -154,7 +154,7 @@ public interface IBookRepository : IRepository<Book>
 ### Repositório-Base
 ```csharp
 namespace Infrastructure.Repositories.Base;
-public class BaseRepository<T> : IRepository<T> where T : class
+public abstract class BaseRepository<T> : IRepository<T> where T : class
 {
   protected readonly IMongoCollection<T> _collection = null;
 
@@ -164,7 +164,7 @@ public class BaseRepository<T> : IRepository<T> where T : class
     _collection = context.GetCollection<T>(CollectionName());
   }
 
-  protected virtual string CollectionName();
+  protected abstract string CollectionName();
 
   protected async Task<List<T>> GetAsync() =>
     await _collection.Find(_ => true).ToListAsync();

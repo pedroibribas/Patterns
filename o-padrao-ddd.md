@@ -1,4 +1,4 @@
-# Pastas
+# O Padrão DDD
 
 ## Introdução
 

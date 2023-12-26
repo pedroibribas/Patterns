@@ -1,3 +1,10 @@
+# .NET Core e MongoDB com Padrão Repository
+
+## Referências
+- [Microsoft. Create a web API with ASP.NET Core and MongoDB](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-mongo-app?view=aspnetcore-8.0&tabs=visual-studio)
+
+## HttpClient
+
 A documentação da Microsoft nos apresenta algumas diretrizes importantes na utilização da classe HttpClient. De acordo com a Microsoft, o ideal é a criação de uma única instância de HttpClient e que esta seja reutilizada durante a vida útil da aplicação para evitarmos problemas como o de esgotamento de soquetes. E como solução ela nos apresenta o uso da interface IHttpClientFactory para tornar as instâncias de HttpClient mais gerenciáveis e lidar com cenários de longa execução.
 
 Para saber mais detalhes destas recomendações da Microsoft para o HttpClient, acesse o link abaixo:
