@@ -32,8 +32,15 @@ Quando o código das dependências também é rodado para verificar seu funciona
 ### *[Em construção...]*
 R (Repeatable): A possibilidade de conseguir repetir os testes em qualquer ambiente ou máquina, sem depender de fatores externos ou estado compartilhado. Isso evita inconsistências nos resultados dos testes.
 
-### *[Em construção...]*
-S (Self-validating): Os testes devem ser auto validados, ou seja, devem ser capazes de indicar automaticamente se passaram ou falharam. Isso permite que os desenvolvedores identifiquem rapidamente problemas no código.
+### S para *Self-Validating* - Autovalidável
+
+Os testes devem ser autovalidáveis, ou seja, devem ser capazes de indicar automaticamente se passaram ou falharam. Isso permite que os desenvolvedores identifiquem rapidamente problemas no código.
+
+Isso significa que os testes devem ser capazes de verificar o resultado de uma ação com o mais detalhes possível.
+
+> A verificação de resultados pode ser feito pelo **padrão Result**.
+
+> Para gerar resultados validáveis no .NET, é recomendado usar os tipos da biblioteca **FluentResults** como retorno na implementação dos métodos testados.
 
 ### T para *Timely* - A Tempo
 
@@ -115,6 +122,14 @@ Os arquivos Builder:
 - São nomeados com o sufixo `Builder`.
 - Podem estar em uma pasta própria no projeto de testes, com o nome *Builder*.
 
+## Padrão Result
+
+Os testes precisam ser autovalidáveis, conforme o princípio 'S' dos testes limpos.
+
+O padrão Result tem como finalidade a validação do resultado da operação testada.
+
+Isso significa que um resultado é guardado a partir do método testado para verificar sua validade.
+
 # Moq
 
 ## Refs
@@ -158,3 +173,16 @@ userServiceMock.Verify(
 
 - `Func<Times> times`: Parâmetro que representa quantas vezes se espera que o comportamento matcheado se deu, cujo valor é o enum `Times`.
 
+# FluentResults
+```csharp
+// Teste
+var result = userService.CreateUser(new User());
+Assert.True(result.IsSuccess);
+// Implementação
+public Task<FluentResults.Result> CreateUser(User user)
+{
+  // Lógica de criação do usuário...
+  // ...
+  return Result.Ok();
+}
+```
