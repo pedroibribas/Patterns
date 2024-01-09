@@ -174,15 +174,70 @@ userServiceMock.Verify(
 - `Func<Times> times`: Parâmetro que representa quantas vezes se espera que o comportamento matcheado se deu, cujo valor é o enum `Times`.
 
 # FluentResults
+
+Esse pacote é uma solução para aplicar o padrão _Result_ nos testes (para obedecer ao princípio _Self-Validation_).
+
+## Uso de `FluentResults`
+
+O objeto do teste precisa retornar o resultado.
+A biblioteca apresenta métodos para esse retorno.
+
+## Casos de uso
+
+### Validando caso bem-sucedido com igualdade de valores
+
+- Teste
+
 ```csharp
-// Teste
-var result = userService.CreateUser(new User());
-Assert.True(result.IsSuccess);
-// Implementação
-public Task<FluentResults.Result> CreateUser(User user)
+public async Task TestCreateUser()
 {
-  // Lógica de criação do usuário...
-  // ...
-  return Result.Ok();
+//act
+  var result = userService.CreateUser(new User());
+//assert
+    Assert.True(result.IsSuccess);
+    var success = (SuccessWithUsers)result.Successes[0];
+    Assert.Equal("Pedro", success.Data.Name);
+}
+```
+
+- Implementação
+
+```csharp
+try
+{
+  return Result.Ok().WithSuccess(new SuccessWithPets(user));
+}
+```
+
+- Tipo Success para guardar sucessos
+
+```csharp 
+public class SuccessWithUser : Success
+{
+  public User Data { get;  }
+  public SuccessWithUser(User data) =>
+    Data = data;
+}
+```
+
+### Validando exceção
+
+- Teste
+
+```csharp
+//arrange
+  reader.Setup(_ => _.Read()).Throws<FileNotFoundException>();
+//act
+  Result result = credentialsHandler.GetFromFile(reader);
+//assert
+  Assert.True(result.IsFailed);
+```
+
+- Implementação
+
+```csharp
+catch(Exception e)
+{
+  return Result.Fail(new Error("Reading operation has failed.").CausedBy(e));
 }
 ```
