@@ -2,6 +2,8 @@
 
 ## Introdução
 
+DDD ou Domain-Driven Design é um termo difundido por Eric Evans em seu livro “Domain-Driven Design: Atacando as complexidades no coração do software”.
+
 Organizar o projeto em pastas pode melhorar a **manutenção** do código. Isso torna o código **modular**, e aí partes do código ficam isoladas, o que facilitar a modificação sem afetar outras partes do projeto. Também facilita a colaboração entre a equipe, permitindo que cada desenvolvedor atue em uma parte específica do projeto.
 
 Como, por exemplo, separar em uma pasta específica classes com a lógica de negócios -- **Models**; com interface do usuário -- **Commands**; classes utilitárias -- **Utils**; classes de teste -- **Tests**; classes que se comunicam com a API -- **Services**; etc.
@@ -77,3 +79,4 @@ Solution
 - Interfaces: contratos.
 - Dtos: classes p/ transferência de dados usadas por controladores.
 - Data (ou Infra, ou Infrastructure): classes responsáveis por implementar os contratos do domínio relativos aos repositórios.
+- Application: intermediário da comunicação entre infra, domínio e apresentação.

@@ -12,14 +12,28 @@
 
 ## Pilares da Programação Orientada a Objeto
 - Encapsulamento
+
 ### Encapsulamento
 O pilar do encapsulamento (_encapsulation_) lida com a segregação da informação e sua manipulação dentro de uma única classe. Sua finalidade é criar códigos mais fáceis de entender, concentrar a manutenção de uma informação, e manter a integridade da informação. O encapsulamento é feito através da limitação do acesso a propriedades e métodos, bem como na limitação do retorno dos métodos.
+
 ### Coleções .NET
 O (_Diretrizes para Coleções_)[https://learn.microsoft.com/pt-br/dotnet/standard/design-guidelines/guidelines-for-collections] trata de boas práticas no uso de coleções de objetos que tornam o código mais seguro, especialmente coleções que implementam o tipo `IEnumerable<T>`, sendo algumas as seguintes:
 - Não usar o tipo `List<T>` em APIs públicas, pois o seu retorno é alterável pelo cliente da solicitação. Optar por seu uso em implementações internas.
 - Para coleções somente leitura, usar o tipo `ReadOnlyColletion<T>`.
 - Para acessar propriedades de coleções de leitura/gravação, optar pelo tipo `Collection<T>` ou classes da sua hierarquia.
 - Preferir `IEnumerable<T>` a `ICollection<T>` para acessar propriedades como `Count`.
+
+### Injeção de Dependência
+Se os módulos de um sistema são muito dependentes entre si, o código não fica flexível para mudanças.
+
+A Injeção de Dependência é um padrão de projeto cuja finalidade é diminuir o acoplamento entre módulos de um sistema, isto é, 
+a dependência de um módulo do outro.
+
+Na DI, usa-se abstrações (classes abstratas e interfaces) no lugar das implementações concretas (classes),
+e assim se evita, por exemplo, que uma alteração no comportamento de uma classe afete os demais módulos do sistema significativamente,
+visto que a abstração aceita qualquer classe que a implemente.
+
+> O .NET possui a biblioteca Microsoft.Extensions.DependencyInjection, que permite implementar o padrão da DI, criando e registrando um container de serviço com uma instância do objeto que possui os comportamentos que desejamos usar.
 
 ## Legibilidade
 
@@ -122,3 +136,4 @@ O problema de se usar o padrão `if-else` é que o código pode se tornar desnec
 O operador null-coalescing `??` é uma alternativa ao if-else, que reduz as linhas de código quando se verifica que a expressão validada é nula, para provocar o retorno da segunda expressão.
 
 Contudo, o operador null-coalescing pode acabar prejudicando a legibilidade do código, de modo que usá-lo não é uma unanimidade, e dependerá do caso.
+
